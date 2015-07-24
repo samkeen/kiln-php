@@ -34,8 +34,8 @@ class Cli
         }
         // redirect STDERR to STDOUT so it is captured in $output
         exec("{$command} 2>&1", $output, $returnCode);
-        $this->logger->debug(implode("Return code from command was: {$returnCode}", $output));
-        $this->logger->debug(implode("\n", $output));
+        $this->logger->debug("Return code from command was: {$returnCode}");
+        $this->logger->debug("Command output was: ", $output);
         if ($workingDirectory) {
             chdir($cwd);
         }
