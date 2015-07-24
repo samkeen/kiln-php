@@ -1,0 +1,23 @@
+{
+  "name": "samk.io/ami-builder",
+  "description": "Container (AMI) building script",
+  "require": {
+    "aws/aws-sdk-php": "^2.8",
+    "katzgrau/klogger": "dev-master"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^4.7"
+  },
+  "license": "The MIT License (MIT)",
+  "authors": [
+    {
+      "name": "samkeen",
+      "email": "sam.sjk@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Io\\Samk\\": "src/"
+    }
+  }
+}
