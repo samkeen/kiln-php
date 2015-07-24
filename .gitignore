@@ -2,3 +2,4 @@
 logs/
 vendor/
 config/config.json
+build/
