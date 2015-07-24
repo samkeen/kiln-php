@@ -1,4 +1,4 @@
-# seeder
+# seedling
 
 [![Build Status](https://travis-ci.org/samkeen/seeder.svg?branch=master)](https://travis-ci.org/samkeen/seeder)
 
