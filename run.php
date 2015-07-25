@@ -16,7 +16,14 @@ $logger = new Katzgrau\KLogger\Logger(
 
 $configPath = __DIR__ . "/config/config.json";
 
-$config = new \Io\Samk\AmiBuilder\Utils\Config(__DIR__ . "/config/config.json");
+try {
+    $configFilePath = __DIR__ . "/config/config.yml";
+    $config = new \Io\Samk\AmiBuilder\Utils\Config($configFilePath);
+} catch (\Exception $e) {
+    $logger->error(
+        "There was a problem loading the config file are path: '{$configFilePath}'. Error: '{$e->getMessage()}'");
+    exit("Problem Loading Config File.  Error: '{$e->getMessage()}'");
+}
 
 $awsConfig = $config->get('awsConfig');
 $sqsConfig = $config->get('sqsConfig');
@@ -47,7 +54,6 @@ try {
     echo "ERROR: {$e->getMessage()}" . "\n";
 }
 
-
 /**
  * if Work Found
  */
@@ -70,7 +76,7 @@ if (json_last_error()) {
     exit("There was a JSON parse error on the work item Body: " . json_last_error_msg());
 }
 
-if(!$messagePayload) {
+if (!$messagePayload) {
     exit("No Work found");
 }
 
