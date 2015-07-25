@@ -1,0 +1,3 @@
+# malformed yaml fixture
+
+one: this is : malformed

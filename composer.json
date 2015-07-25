@@ -3,7 +3,8 @@
   "description": "Container (AMI) building script",
   "require": {
     "aws/aws-sdk-php": "^2.8",
-    "katzgrau/klogger": "dev-master"
+    "katzgrau/klogger": "dev-master",
+    "mustangostang/spyc": "dev-master"
   },
   "require-dev": {
     "phpunit/phpunit": "^4.7"

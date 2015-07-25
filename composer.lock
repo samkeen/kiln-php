@@ -1,23 +1,23 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "1b857f53ffe9c66b6dcdcb0242391253",
+    "hash": "8989b4951bc23fe6d22f6049eb79d107",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "2.8.14",
+            "version": "2.8.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "cc3f63f695e15e4b1e6ee0e090c32bfde78115a4"
+                "reference": "5c9cd0d0da069ae556db2900d34c9140bb9166b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/cc3f63f695e15e4b1e6ee0e090c32bfde78115a4",
-                "reference": "cc3f63f695e15e4b1e6ee0e090c32bfde78115a4",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/5c9cd0d0da069ae556db2900d34c9140bb9166b5",
+                "reference": "5c9cd0d0da069ae556db2900d34c9140bb9166b5",
                 "shasum": ""
             },
             "require": {
@@ -67,7 +67,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2015-07-14 20:48:28"
+            "time": "2015-07-24 00:30:15"
         },
         {
             "name": "guzzle/guzzle",
@@ -213,6 +213,53 @@
                 "logging"
             ],
             "time": "2015-04-27 14:06:51"
+        },
+        {
+            "name": "mustangostang/spyc",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mustangostang/spyc.git",
+                "reference": "eeb9f7c47e1457770d64c7fb1f3d4aabff52de4b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mustangostang/spyc/zipball/eeb9f7c47e1457770d64c7fb1f3d4aabff52de4b",
+                "reference": "eeb9f7c47e1457770d64c7fb1f3d4aabff52de4b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.1"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.5.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "Spyc.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "mustangostang",
+                    "email": "vlad.andersen@gmail.com"
+                }
+            ],
+            "description": "A simple YAML loader/dumper class for PHP",
+            "homepage": "https://github.com/mustangostang/spyc/",
+            "keywords": [
+                "spyc",
+                "yaml",
+                "yml"
+            ],
+            "time": "2014-08-21 09:14:01"
         },
         {
             "name": "psr/log",
@@ -1266,7 +1313,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "katzgrau/klogger": 20
+        "katzgrau/klogger": 20,
+        "mustangostang/spyc": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
