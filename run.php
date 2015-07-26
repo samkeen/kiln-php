@@ -49,9 +49,9 @@ try {
 //    $response = $sqsClient->deleteQueue(['QueueUrl' => $queueUrl]);
 
 } catch (\Aws\Sqs\Exception\SqsException $e) {
-    echo "ERROR: {$e->getMessage()}";
+    exit ("ERROR: {$e->getMessage()}");
 } catch (Exception $e) {
-    echo "ERROR: {$e->getMessage()}" . "\n";
+    exit ("ERROR: {$e->getMessage()}" . "\n");
 }
 
 /**

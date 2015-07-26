@@ -1,8 +1,10 @@
 awsConfig:
   # see http://docs.aws.amazon.com/aws-sdk-php/v2/guide/service-sts.html#creating-a-client
   region: us-west-2
+  # not needed if running on EC2 launched with appropriate Role
+  profile: default
 sqsConfig:
-  queueName: ami-build-requests
+  amiBuildRequestQueueName: ami-build-requests
   # see http://docs.aws.amazon.com/aws-sdk-php/v2/api/class-Aws.Sqs.SqsClient.html#_getQueueAttributes
   queueAttributes:
     VisibilityTimeout: 1200
