@@ -19,5 +19,7 @@ packer:
   awsAccessKey: null
   awsSecretKey: null
 templates:
-  templatesRepo: 'git@github.com:'
-  checkoutPath: ~/packer-templates
+  templatesRepo: 'git@github.com:<YOUR REPO PATH>'
+  checkoutPath: /<PATH>/<TO>/<CEHCKOUT>/<TEMPLATES>/<REPO>/<TO>
+executionDigest:
+  bucketName: <YOUR BUCKET NAME>
