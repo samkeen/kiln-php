@@ -26,7 +26,6 @@ class Cli
     public function execute($command, $workingDirectory = null)
     {
         $cwd = getcwd();
-        echo getcwd() . "\n";
         $command = escapeshellcmd($command);
         $this->logger->info("Running Command: {$command}");
         if ($workingDirectory) {
