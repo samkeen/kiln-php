@@ -8,14 +8,24 @@ use Psr\Log\LoggerInterface;
 class Cli
 {
     protected $logger;
+    /**
+     * @var array
+     */
+    protected $filterReplacements;
 
     /**
      * Cli constructor.
      * @param LoggerInterface $logger
+     * @param array $filterReplacements In form
+     * [
+     *    "patterns" => ["/PATTERN1/","/PATTERN2/"],
+     *    "replacements" => ["replacement1", "replacement2"]
+     * ]
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, $filterReplacements=[])
     {
         $this->logger = $logger;
+        $this->filterReplacements = $filterReplacements;
     }
 
     /**
@@ -27,7 +37,7 @@ class Cli
     {
         $cwd = getcwd();
         $command = escapeshellcmd($command);
-        $this->logger->info("Running Command: {$command}");
+        $this->logger->info("Running Command: {$this->censorCommand($command)}");
         if ($workingDirectory) {
             chdir($workingDirectory);
         }
@@ -65,6 +75,16 @@ class Cli
         $command = "{$executable} build {$awsVars} {$pathToTemplate}";
 
         return $this->execute($command);
+    }
+
+    protected function censorCommand($command)
+    {
+        $command = preg_replace(
+            $this->filterReplacements['patterns'],
+            $this->filterReplacements['replacements'],
+            $command
+        );
+        return $command;
     }
 
 }
