@@ -59,12 +59,14 @@ try {
         'Attributes' => $sqsQueueAttributes
     ]);
     $queueUrl = $createQueueResponse->get('QueueUrl');
-//    deleteQueue($sqsClient, $sqsConfig['amiBuildRequestQueueName']);
+//    deleteQueue($sqsClient, $sqsConfig['amiBuildRequestQueueName'], $logger);
 
 } catch (\Aws\Sqs\Exception\SqsException $e) {
-    exit ("ERROR: {$e->getMessage()}");
+    $logger->error("SqsException during create and/or access of SQS:  '{$e->getMessage()}''");
+    exit ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 } catch (Exception $e) {
-    exit ("ERROR: {$e->getMessage()}" . "\n");
+    $logger->error("Exception during create and/or access of SQS:  '{$e->getMessage()}''");
+    exit ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 }
 
 /**
@@ -83,7 +85,9 @@ $message = $work->get("Messages")[0];
  */
 $messagePayload = json_decode($message['Body'], true);
 if (json_last_error()) {
-    exit("There was a JSON parse error on the work item Body: " . json_last_error_msg());
+    $message = "There was a JSON parse error on the work item Body in the SQS message. " . json_last_error_msg();
+    $logger->error($message, $message['Body']);
+    exit($message . "\n {$message['Body']}");
 }
 
 if (!$messagePayload) {
@@ -126,6 +130,7 @@ list($output, $returnCode) = $cli->execute("git co {$templateSha}", $templatesCh
  */
 $pathToTemplate = trim("{$templatesCheckoutPath}/{$template}");
 if (!file_exists($pathToTemplate)) {
+    $logger->error("Path to build template not exists and/or not readable: '{$pathToTemplate}'");
     exit("Path to build template not exists and/or not readable: '{$pathToTemplate}'");
 }
 $packerConfig = $config->get('packer');
@@ -157,7 +162,8 @@ writeExecutionDigest(
     $aws,
     $s3ObjectPath,
     $config->get('executionDigest'),
-    spyc_dump($executionMetrics)
+    spyc_dump($executionMetrics),
+    $logger
 );
 
 /**
@@ -170,20 +176,34 @@ writeExecutionDigest(
  * @param string $queueName
  */
 
-
-function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName)
+/**
+ * @param \Aws\Sqs\SqsClient $sqsClient
+ * @param string $queueName
+ * @param \Psr\Log\LoggerInterface $logger
+ */
+function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, $logger)
 {
     try {
         $queueUrlResponse = $sqsClient->getQueueUrl(['QueueName' => $queueName]);
         $sqsClient->deleteQueue(['QueueUrl' => $queueUrlResponse->get('QueueUrl')]);
     } catch (\Aws\Sqs\Exception\SqsException $e) {
+        $logger->error("SqsException Deleting Queue '{$queueName}': {$e->getMessage()}");
         exit ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
     } catch (Exception $e) {
+        $logger->error("Exception Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
         exit ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
     }
 }
 
-function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $digestContent)
+/**
+ * @param \Aws\Common\Aws $aws
+ * @param string $keyName
+ * @param array $digestConfig
+ * @param string $digestContent
+ * @param \Psr\Log\LoggerInterface $logger
+ * @return mixed
+ */
+function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $digestContent, $logger)
 {
     $bucketName = $digestConfig["bucketName"];
     $s3Client = $aws->get('S3');
@@ -194,8 +214,10 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
             'Body' => $digestContent
         ));
     } catch (\Aws\S3\Exception\S3Exception $e) {
-        exit ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        $logger->error("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        exit ("S3Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     } catch (Exception $e) {
+        $logger->error("Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
         exit ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     }
 
