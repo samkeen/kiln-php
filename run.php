@@ -18,11 +18,10 @@ $executionMetrics = [
 ];
 
 $logger = new Katzgrau\KLogger\Logger(
-    __DIR__ . '/logs',
+    __DIR__ . '/logs/app',
     Psr\Log\LogLevel::DEBUG,
     [
         'extension' => 'log',
-        'filename' => 'app',
         'logFormat' => "[{date}] [{$executionUuid}] [{level}] {message}"
     ]
 );

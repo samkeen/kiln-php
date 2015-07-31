@@ -31,7 +31,7 @@ class Config
 
     }
 
-    public function get($key, $exceptionOnMissing = true)
+    public function get($key, $exceptionOnMissing = false)
     {
         $response = null;
         if (!$this->config[$key] && $exceptionOnMissing) {
