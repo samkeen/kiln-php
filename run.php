@@ -34,7 +34,7 @@ try {
 } catch (\Exception $e) {
     $logger->error(
         "There was a problem loading the config file are path: '{$configFilePath}'. Error: '{$e->getMessage()}'");
-    exit("Problem Loading Config File.  Error: '{$e->getMessage()}'");
+    shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
 }
 
 $awsConfig = $config->get('awsConfig');
@@ -63,10 +63,10 @@ try {
 
 } catch (\Aws\Sqs\Exception\SqsException $e) {
     $logger->error("SqsException during create and/or access of SQS:  '{$e->getMessage()}''");
-    exit ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
+    shutDown ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 } catch (Exception $e) {
     $logger->error("Exception during create and/or access of SQS:  '{$e->getMessage()}''");
-    exit ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
+    shutDown ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 }
 
 /**
@@ -87,12 +87,12 @@ $messagePayload = json_decode($message['Body'], true);
 if (json_last_error()) {
     $message = "There was a JSON parse error on the work item Body in the SQS message. " . json_last_error_msg();
     $logger->error($message, $message['Body']);
-    exit($message . "\n {$message['Body']}");
+    shutDown($message . "\n {$message['Body']}");
 }
 
 if (!$messagePayload) {
     $logger->info('No work found');
-    exit("No Work found");
+    shutDown("No Work found", 0);
 }
 $messagePayload = array_change_key_case($messagePayload, CASE_LOWER);
 $template = ltrim($messagePayload['templatename'], ' /');
@@ -131,7 +131,7 @@ list($output, $returnCode) = $cli->execute("git co {$templateSha}", $templatesCh
 $pathToTemplate = trim("{$templatesCheckoutPath}/{$template}");
 if (!file_exists($pathToTemplate)) {
     $logger->error("Path to build template not exists and/or not readable: '{$pathToTemplate}'");
-    exit("Path to build template not exists and/or not readable: '{$pathToTemplate}'");
+    shutDown("Path to build template not exists and/or not readable: '{$pathToTemplate}'");
 }
 $packerConfig = $config->get('packer');
 
@@ -188,10 +188,10 @@ function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, $logger)
         $sqsClient->deleteQueue(['QueueUrl' => $queueUrlResponse->get('QueueUrl')]);
     } catch (\Aws\Sqs\Exception\SqsException $e) {
         $logger->error("SqsException Deleting Queue '{$queueName}': {$e->getMessage()}");
-        exit ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
+        shutDown ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
     } catch (Exception $e) {
         $logger->error("Exception Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
-        exit ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
+        shutDown ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
     }
 }
 
@@ -215,13 +215,23 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
         ));
     } catch (\Aws\S3\Exception\S3Exception $e) {
         $logger->error("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
-        exit ("S3Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        shutDown ("S3Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     } catch (Exception $e) {
         $logger->error("Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
-        exit ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        shutDown ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     }
 
     return $result;
 
+}
+
+/**
+ * @param string $message
+ * @param int $returnCode
+ */
+function shutDown($message, $returnCode=1) {
+    $message = trim($message)."\n";
+    echo($message);
+    exit($returnCode);
 }
 
