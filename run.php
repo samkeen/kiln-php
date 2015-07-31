@@ -99,7 +99,13 @@ $executionMetrics['jobBuildTemplateSha'] = $templateSha;
 $logger->info("Found Work, request for template '{$template}' @ SHA '{$templateSha}'");
 $executionMetrics['jobReceived'] = true;
 
-$cli = new \Io\Samk\AmiBuilder\Utils\Cli($logger);
+$cli = new \Io\Samk\AmiBuilder\Utils\Cli(
+    $logger,
+    [
+        "patterns" => ['/(aws_access_key)=([\w\+]+)(.*)/', '/(aws_secret_key)=([\w\+]+)(.*)/'],
+        "replacements" => '$1=<$1>$3'
+    ]
+);
 
 /**
  * update template checkout
@@ -132,8 +138,8 @@ list($result, $returnCode) = $cli->runPackerBuild(
     $packerConfig['awsSecretKey']
 );
 
-if($returnCode == 0) {
-    list($region, $amiId) =  array_map('trim',explode(":", $result[count($result)-1]));
+if ($returnCode == 0) {
+    list($region, $amiId) = array_map('trim', explode(":", $result[count($result) - 1]));
     $executionMetrics['createdAmiRegion'] = $region;
     $executionMetrics['createdAmiId'] = $amiId;
     $logger->info("Packer build succeeded: Region '{$region}', AMI id '{$amiId}'");
@@ -145,7 +151,7 @@ if($returnCode == 0) {
 }
 
 $date = date('Y-m-d\TH-i-s', $executionMetrics['startTime']);
-$shaForPath = substr($templateSha,0,7);
+$shaForPath = substr($templateSha, 0, 7);
 $s3ObjectPath = "builds/{$template}/{$date}/{$shaForPath}.yml";
 $logger->info("Writing results to S3: '{$s3ObjectPath}'");
 writeExecutionDigest(
@@ -185,8 +191,8 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
     try {
         $result = $s3Client->putObject(array(
             'Bucket' => $bucketName,
-            'Key'    => $keyName,
-            'Body'   => $digestContent
+            'Key' => $keyName,
+            'Body' => $digestContent
         ));
     } catch (\Aws\S3\Exception\S3Exception $e) {
         exit ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
