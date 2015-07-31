@@ -123,7 +123,7 @@ if (!file_exists($templatesCheckoutPath)) {
 $logger->info("checking out local packer templates repo '{$templatesCheckoutPath}' to SHA '{$templateSha}'");
 list($output, $returnCode) = $cli->execute('git fetch --all', $templatesCheckoutPath);
 list($output, $returnCode) = $cli->execute("git reset --hard origin/master", $templatesCheckoutPath);
-list($output, $returnCode) = $cli->execute("git co {$templateSha}", $templatesCheckoutPath);
+list($output, $returnCode) = $cli->execute("git checkout {$templateSha}", $templatesCheckoutPath);
 
 /**
  * Run packer and capture image region and name

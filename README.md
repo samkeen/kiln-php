@@ -24,6 +24,6 @@ $ curl -sS https://getcomposer.org/installer | php
 
 $ php composer.phar install
 
-$php run.php
+$ php run.php
 
 ```
