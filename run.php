@@ -63,10 +63,10 @@ try {
 
 } catch (\Aws\Sqs\Exception\SqsException $e) {
     $logger->error("SqsException during create and/or access of SQS:  '{$e->getMessage()}''");
-    shutDown ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
+    shutDown("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 } catch (Exception $e) {
     $logger->error("Exception during create and/or access of SQS:  '{$e->getMessage()}''");
-    shutDown ("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
+    shutDown("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
 }
 
 /**
@@ -138,8 +138,8 @@ $packerConfig = $config->get('packer');
 list($result, $returnCode) = $cli->runPackerBuild(
     $packerConfig['executablePath'],
     $pathToTemplate,
-    $packerConfig['awsAccessKey'],
-    $packerConfig['awsSecretKey']
+    isset($packerConfig['awsAccessKey']) ? $packerConfig['awsAccessKey'] : null,
+    isset($packerConfig['awsSecretKey']) ? $packerConfig['awsSecretKey'] : null
 );
 
 if ($returnCode == 0) {
@@ -188,10 +188,10 @@ function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, $logger)
         $sqsClient->deleteQueue(['QueueUrl' => $queueUrlResponse->get('QueueUrl')]);
     } catch (\Aws\Sqs\Exception\SqsException $e) {
         $logger->error("SqsException Deleting Queue '{$queueName}': {$e->getMessage()}");
-        shutDown ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
+        shutDown("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
     } catch (Exception $e) {
         $logger->error("Exception Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
-        shutDown ("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
+        shutDown("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
     }
 }
 
@@ -215,10 +215,10 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
         ));
     } catch (\Aws\S3\Exception\S3Exception $e) {
         $logger->error("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
-        shutDown ("S3Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        shutDown("S3Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     } catch (Exception $e) {
         $logger->error("Exception PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
-        shutDown ("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
+        shutDown("ERROR PUTing to bucket '{$bucketName}': {$e->getMessage()}" . "\n");
     }
 
     return $result;
@@ -229,8 +229,9 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
  * @param string $message
  * @param int $returnCode
  */
-function shutDown($message, $returnCode=1) {
-    $message = trim($message)."\n";
+function shutDown($message, $returnCode = 1)
+{
+    $message = trim($message) . "\n";
     echo($message);
     exit($returnCode);
 }
