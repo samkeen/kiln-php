@@ -1,0 +1,152 @@
+<?php
+
+require 'vendor/autoload.php';
+
+$logger = new Katzgrau\KLogger\Logger(
+    __DIR__ . '/logs/test',
+    Psr\Log\LogLevel::ERROR
+);
+
+/**
+ * Test that we have proper access to
+ *
+ *   - Git Hub
+ *   - SQS
+ *   - S3
+ */
+
+try {
+    $config = new \Io\Samk\AmiBuilder\Utils\Config(__DIR__ . "/config/config.yml");
+} catch (\Exception $e) {
+    $logger->error(
+        "There was a problem loading the config. Error: '{$e->getMessage()}'");
+    shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
+}
+
+$awsConfig = $config->get('awsConfig', true);
+$sqsConfig = $config->get('sqsConfig', true);
+$sqsQueueAttributes = $sqsConfig['queueAttributes'];
+/**
+ * Init AWS SDK
+ */
+$aws = \Aws\Common\Aws::factory($awsConfig);
+
+/**
+ * Test SQS connectivity
+ */
+/** @var \Aws\Sqs\SqsClient $sqsClient */
+$sqsClient = $aws->get('sqs');
+$queueUrl = '';
+$sqsName = $sqsConfig['amiBuildRequestQueueName'];
+try {
+
+    echo "1. Checking for SQS connectivity\n\n";
+    echo "Attempting getQueueUrl call on SQS '{$sqsName}'...\n";
+    $queueResponse = $sqsClient->getQueueUrl([
+        'QueueName' => $sqsName
+    ]);
+    $queueUrl = $queueResponse->get('QueueUrl');
+    echo "Was able to get Queue URL ({$queueUrl}) for configured work queue: '{$sqsName}'\n\n";
+    // call receiveMessage with 1sec visibility timeout just to see if we get an error
+    echo "Attempting receiveMessage call on SQS '{$sqsName}'...\n";
+    $work = $sqsClient->receiveMessage([
+        "QueueUrl" => $queueUrl,
+        "MaxNumberOfMessages" => 1,
+        "VisibilityTimeout" => 1, // 1 sec time out
+        "MessageAttributeNames" => []
+    ]);
+    echo "Was able to make receiveWork call on SQS '{$sqsName}' without error\n\n";
+
+} catch (Exception $e) {
+    shutDown("Error when attempting to access and/or receive work from SQS: '{$sqsName}'"
+        . ".  Error message: {$e->getMessage()}");
+}
+
+
+$cli = new \Io\Samk\AmiBuilder\Utils\Cli(
+    $logger,
+    [
+        "patterns" => ['/(aws_access_key)=([\w\+]+)(.*)/', '/(aws_secret_key)=([\w\+]+)(.*)/'],
+        "replacements" => '$1=<$1>$3'
+    ]
+);
+
+/**
+ * Test Github connectivity
+ */
+try {
+    echo "2. Checking git hub template repo connectivity\n\n";
+    $templatesConfig = $config->get('templates', true);
+    $templatesRepo = $templatesConfig['templatesRepo'];
+    $templatesCheckoutPath = $templatesConfig['checkoutPath'];
+
+    if (!file_exists($templatesCheckoutPath)) {
+        echo "Template repo not found locally, attempting Clone of repo '{$templatesRepo}' to local dir '{$templatesCheckoutPath}'...\n";
+        list($output, $returnCode) = $cli->execute("git clone {$templatesRepo} {$templatesCheckoutPath}");
+        checkCliResponse($output, $returnCode);
+    } else {
+        echo "Local checkout of template repo '{$templatesRepo}', exists at '{$templatesCheckoutPath}', attempting git fetch...\n";
+        list($output, $returnCode) = $cli->execute('git fetch --all', $templatesCheckoutPath);
+        checkCliResponse($output, $returnCode);
+    }
+
+
+} catch (Exception $e) {
+    shutDown("Error when attempting to access Githup repo: '{$templatesRepo}'"
+        . ".  Error message: {$e->getMessage()}");
+}
+
+/**
+ * Test S3 connectivity
+ */
+try {
+    /** @var \Aws\S3\S3Client $s3Client */
+    $s3Client = $aws->get('S3');
+    $s3Config = $config->get('executionDigest', true);
+    $bucketName = $s3Config["bucketName"];
+
+    echo "3. Checking S3 digest bucket '{$bucketName}' connectivity\n\n";
+    $result = $s3Client->headBucket(array(
+        // Bucket is required
+        'Bucket' => $bucketName,
+    ));
+    echo "Read access to '{$bucketName}', success\n";
+    $objectPath = "connectivityTest/" . date("U") . ".txt";
+    echo "Testing write access. Attempting to PUT '{$bucketName}/{$objectPath}' ...\n";
+    $result = $s3Client->putObject(array(
+        'Bucket' => $bucketName,
+        'Key' => $objectPath,
+        'Body' => "connectivity test object, OK to delete"
+    ));
+    echo "Write access success\n";
+
+} catch (Exception $e) {
+    shutDown("Error when attempting to access S3 digest bucket: '{$bucketName}'"
+        . ".  Error message: {$e->getMessage()}");
+}
+
+/**
+ * @param $cliOutput
+ * @param $returnCode
+ */
+function checkCliResponse($cliOutput, $returnCode)
+{
+    if ($returnCode == 0) {
+        echo "Success\n";
+    } else {
+        echo "Received non-zero return code '{$returnCode}', Output was:\n";
+        echo implode("\n", $cliOutput);
+        shutDown();
+    }
+}
+
+/**
+ * @param string $message
+ * @param int $returnCode
+ */
+function shutDown($message = "Shutting down\n", $returnCode = 1)
+{
+    $message = trim($message) . "\n";
+    echo($message);
+    exit($returnCode);
+}

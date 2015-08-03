@@ -24,6 +24,9 @@ $ curl -sS https://getcomposer.org/installer | php
 
 $ php composer.phar install
 
+# Optionally, test system connectivity
+$ php test.php
+
 $ php run.php
 
 ```
