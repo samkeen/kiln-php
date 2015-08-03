@@ -8,6 +8,7 @@ $executionMetrics = [
     "executionUuid" => $executionUuid,
     "startTime" => $executionStartTime,
     "amiBuildQueueName" => "",
+    "jobMessage" => null,
     "jobBuildTemplate" => "",
     "jobBuildTemplateSha" => "",
     "jobReceived" => false,
@@ -89,8 +90,19 @@ if (!$messagePayload) {
     shutDown("No Work found", 0);
 }
 $messagePayload = array_change_key_case($messagePayload, CASE_LOWER);
-$template = ltrim($messagePayload['templatename'], ' /');
-$templateSha = $messagePayload['sha'];
+$template = ltrim(isset($messagePayload['templatename'])?$messagePayload['templatename']:null, ' /');
+$templateSha = isset($messagePayload['sha'])?$messagePayload['sha']:null;
+
+if(!$template || !$templateSha) {
+    $message = "Not all required work message attributes found and/or had empty values. "
+        ."templateName : '{$template}', sha: '{$templateSha}' ";
+    $logger->error($message);
+    shutDown($message);
+}
+
+$executionMetrics['jobMessage'] = $message;
+// a lot of unneeded characters for digest message
+unset($executionMetrics['jobMessage']['ReceiptHandle']);
 $executionMetrics['jobBuildTemplate'] = $template;
 $executionMetrics['jobBuildTemplateSha'] = $templateSha;
 $logger->info("Found Work, request for template '{$template}' @ SHA '{$templateSha}'");
@@ -141,6 +153,7 @@ if ($returnCode == 0) {
     $executionMetrics['createdAmiRegion'] = $region;
     $executionMetrics['createdAmiId'] = $amiId;
     $logger->info("Packer build succeeded: Region '{$region}', AMI id '{$amiId}'");
+    deleteQueueMessage($sqsClient, $queueUrl, $message['ReceiptHandle'], $logger);
     $executionMetrics['endTime'] = microtime(true);
 } else {
     $executionMetrics['endedInError'] = true;
@@ -175,7 +188,7 @@ writeExecutionDigest(
  * @param string $queueName
  * @param \Psr\Log\LoggerInterface $logger
  */
-function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, $logger)
+function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, \Psr\Log\LoggerInterface $logger)
 {
     try {
         $queueUrlResponse = $sqsClient->getQueueUrl(['QueueName' => $queueName]);
@@ -186,6 +199,31 @@ function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, $logger)
     } catch (Exception $e) {
         $logger->error("Exception Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
         shutDown("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
+    }
+}
+
+function deleteQueueMessage(
+    \Aws\Sqs\SqsClient $sqsClient,
+    $queueUrl,
+    $messageReceiptHandle,
+    \Psr\Log\LoggerInterface $logger
+) {
+    try {
+        $logger->info("deleting message on queue '{$queueUrl}' using message receipt: '{$messageReceiptHandle}'.");
+        $result = $sqsClient->deleteMessage([
+            'QueueUrl' => $queueUrl,
+            'ReceiptHandle' => $messageReceiptHandle,
+        ]);
+    } catch (\Aws\Sqs\Exception\SqsException $e) {
+        $logger->error("SqsException deleting message on queue '{$queueUrl}' using message receipt: "
+            . "'{$messageReceiptHandle}'. Error: {$e->getMessage()}");
+        shutDown("ERROR deleting message on queue '{$queueUrl}' using message receipt: '{$messageReceiptHandle}'."
+            . "Error: {$e->getMessage()}");
+    } catch (Exception $e) {
+        $logger->error("Exception deleting message on queue '{$queueUrl}' using message receipt: "
+            . "'{$messageReceiptHandle}'. Error: {$e->getMessage()}");
+        shutDown("ERROR deleting message on queue '{$queueUrl}' using message receipt: '{$messageReceiptHandle}'."
+            . "Error: {$e->getMessage()}");
     }
 }
 
