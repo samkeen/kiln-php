@@ -26,14 +26,11 @@ $logger = new Katzgrau\KLogger\Logger(
     ]
 );
 
-$configPath = __DIR__ . "/config/config.json";
-
 try {
-    $configFilePath = __DIR__ . "/config/config.yml";
-    $config = new \Io\Samk\AmiBuilder\Utils\Config($configFilePath);
+    $config = new \Io\Samk\AmiBuilder\Utils\Config(__DIR__ . "/config/config.yml");
 } catch (\Exception $e) {
     $logger->error(
-        "There was a problem loading the config file are path: '{$configFilePath}'. Error: '{$e->getMessage()}'");
+        "There was a problem loading the config. Error: '{$e->getMessage()}'");
     shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
 }
 
@@ -45,9 +42,6 @@ $sqsQueueAttributes = $sqsConfig['queueAttributes'];
  */
 $aws = \Aws\Common\Aws::factory($awsConfig);
 
-/**
- * Read SQS
- */
 /** @var \Aws\Sqs\SqsClient $sqsClient */
 $sqsClient = $aws->get('sqs');
 $queueUrl = '';
