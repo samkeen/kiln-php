@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/samkeen/seedling.svg?branch=master)](https://travis-ci.org/samkeen/seedling)
 
-[![Coverage Status](https://coveralls.io/repos/samkeen/seedling/badge.svg)](https://coveralls.io/r/samkeen/seedling)
+[![Coverage Status](https://coveralls.io/repos/samkeen/seedling/badge.svg?branch=master&service=github)](https://coveralls.io/github/samkeen/seedling?branch=master)
 
 ## Architecture
 
