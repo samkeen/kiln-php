@@ -44,7 +44,7 @@ You can override AWS region and/or AWS profile with command line args
 Example
 
 ```
-php run.php --awsRegion us-west-2 --awsProfile sam-new-admin
+php run.php --awsRegion us-west-2 --awsProfile testing-account
 ```
 
 ### App Config
