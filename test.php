@@ -4,7 +4,7 @@ require 'vendor/autoload.php';
 
 $logger = new Katzgrau\KLogger\Logger(
     __DIR__ . '/logs/test',
-    Psr\Log\LogLevel::ERROR
+    Psr\Log\LogLevel::DEBUG
 );
 
 /**
