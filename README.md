@@ -31,6 +31,30 @@ $ php composer.phar install
 # Optionally, test system connectivity
 $ php test.php
 
-$ php run.php
+$ php run.php --awsRegion us-west-2
 
+```
+
+### AWS Credentials
+
+The script will utilize you local AWS Cli configuration (~/.aws)
+
+You can override AWS region and/or AWS profile with command line args
+
+Example
+
+```
+php run.php --awsRegion us-west-2 --awsProfile sam-new-admin
+```
+
+### App Config
+
+Default path for config is './config/config.yml'
+
+If the cli arg --config is given, that path is used instead.  It supports s3 bucket paths
+
+Example
+
+```
+php run.php --awsRegion us-west-2 --config s3:///kiln-config/testing/config.yml`
 ```

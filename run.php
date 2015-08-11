@@ -27,24 +27,17 @@ $logger = new Katzgrau\KLogger\Logger(
     ]
 );
 
-try {
-    $config = new \Io\Samk\AmiBuilder\Utils\Config(__DIR__ . "/config/config.yml");
-} catch (\Exception $e) {
-    $logger->error(
-        "There was a problem loading the config. Error: '{$e->getMessage()}'");
-    shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
-}
+$aws = createAwsClient($argv, $logger);
+/** @var \Aws\S3\S3Client $s3Client */
+$s3Client = $aws->get('S3');
+$s3Client->registerStreamWrapper();
+$config = getConfig($argv, $logger);
 
 $appConfig = $config->get('appConfig');
 // switch to log level in app config
 $logger->setLogLevelThreshold($appConfig['logLevel']);
-$awsConfig = $config->get('awsConfig');
 $sqsConfig = $config->get('sqsConfig');
 $sqsQueueAttributes = $sqsConfig['queueAttributes'];
-/**
- * Init AWS SDK
- */
-$aws = \Aws\Common\Aws::factory($awsConfig);
 
 /** @var \Aws\Sqs\SqsClient $sqsClient */
 $sqsClient = $aws->get('sqs');
@@ -93,12 +86,12 @@ if (!$messagePayload) {
     shutDown("No Work found", 0);
 }
 $messagePayload = array_change_key_case($messagePayload, CASE_LOWER);
-$template = ltrim(isset($messagePayload['templatename'])?$messagePayload['templatename']:null, ' /');
-$templateSha = isset($messagePayload['sha'])?$messagePayload['sha']:null;
+$template = ltrim(isset($messagePayload['templatename']) ? $messagePayload['templatename'] : null, ' /');
+$templateSha = isset($messagePayload['sha']) ? $messagePayload['sha'] : null;
 
-if(!$template || !$templateSha) {
+if (!$template || !$templateSha) {
     $message = "Not all required work message attributes found and/or had empty values. "
-        ."templateName : '{$template}', sha: '{$templateSha}' ";
+        . "templateName : '{$template}', sha: '{$templateSha}' ";
     $logger->error($message);
     shutDown($message);
 }
@@ -169,7 +162,7 @@ $shaForPath = substr($templateSha, 0, 7);
 $s3ObjectPath = "builds/{$template}/{$date}/{$shaForPath}.yml";
 $logger->info("Writing results to S3: '{$s3ObjectPath}'");
 writeExecutionDigest(
-    $aws,
+    $sqsClient,
     $s3ObjectPath,
     $config->get('executionDigest'),
     spyc_dump($executionMetrics),
@@ -210,7 +203,8 @@ function deleteQueueMessage(
     $queueUrl,
     $messageReceiptHandle,
     \Psr\Log\LoggerInterface $logger
-) {
+)
+{
     try {
         $logger->info("deleting message on queue '{$queueUrl}' using message receipt: '{$messageReceiptHandle}'.");
         $result = $sqsClient->deleteMessage([
@@ -231,17 +225,17 @@ function deleteQueueMessage(
 }
 
 /**
- * @param \Aws\Common\Aws $aws
+ * @param \Aws\S3\S3Client $s3Client
  * @param string $keyName
  * @param array $digestConfig
  * @param string $digestContent
  * @param \Psr\Log\LoggerInterface $logger
  * @return mixed
+ * @internal param \Aws\Common\Aws $aws
  */
-function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $digestContent, $logger)
+function writeExecutionDigest(\Aws\S3\S3Client $s3Client, $keyName, $digestConfig, $digestContent, $logger)
 {
     $bucketName = $digestConfig["bucketName"];
-    $s3Client = $aws->get('S3');
     try {
         $result = $s3Client->putObject(array(
             'Bucket' => $bucketName,
@@ -261,6 +255,29 @@ function writeExecutionDigest(\Aws\Common\Aws $aws, $keyName, $digestConfig, $di
 }
 
 /**
+ * Default path for config is './config/config.yml'
+ * If the cli arg --config is given, that path is used.  It supports s3 bucket paths
+ *
+ *   ex: `php run.php --config s3:///kiln-config/testing/config.yml`
+ *
+ * @param array $cliArgs
+ * @param \Psr\Log\LoggerInterface $logger
+ * @return \Io\Samk\AmiBuilder\Utils\Config
+ */
+function getConfig(array $cliArgs, \Psr\Log\LoggerInterface $logger)
+{
+    $cliConfigArg = getCliArgValue($cliArgs, '--config');
+    $configPath = $cliConfigArg ?: __DIR__ . "/config/config.yml";
+    try {
+        return new \Io\Samk\AmiBuilder\Utils\Config($configPath);
+    } catch (\Exception $e) {
+        $logger->error(
+            "There was a problem loading the config. Error: '{$e->getMessage()}'");
+        shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
+    }
+}
+
+/**
  * @param string $message
  * @param int $returnCode
  */
@@ -270,4 +287,44 @@ function shutDown($message, $returnCode = 1)
     echo($message);
     exit($returnCode);
 }
+
+/**
+ * @param array $cliArgs
+ * @param \Psr\Log\LoggerInterface $logger
+ * @return \Aws\Common\Aws
+ */
+function createAwsClient(array $cliArgs, \Psr\Log\LoggerInterface $logger)
+{
+    $awsConfig['region'] = getCliArgValue($cliArgs, '--awsRegion');
+    if(!$awsConfig['region']) {
+        shutDown("Value for required commandline parameter: '--awsRegion' not found");
+    }
+    $profile = getCliArgValue($cliArgs, '--awsProfile');
+    if($profile) {
+        $awsConfig['profile'] = $profile;
+    }
+
+    return \Aws\Common\Aws::factory($awsConfig);
+}
+
+/**
+ * If command was `php run.php --config s3://myBucket/myObject`
+ * then getCliArgValue($argv, '--config')
+ * would return 's3://myBucket/myObject'
+ *
+ * @param $cliArgs
+ * @param $argKey
+ * @return string
+ */
+function getCliArgValue($cliArgs, $argKey)
+{
+    $cliArgValue = null;
+    $configArgIndex = array_search($argKey, $cliArgs);
+    if ($configArgIndex !== false) {
+        $cliArgValue = isset($cliArgs[$configArgIndex + 1]) ? $cliArgs[$configArgIndex + 1] : null;
+    }
+    return $cliArgValue;
+}
+
+
 
