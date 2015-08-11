@@ -35,6 +35,9 @@ try {
     shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
 }
 
+$appConfig = $config->get('appConfig');
+// switch to log level in app config
+$logger->setLogLevelThreshold($appConfig['logLevel']);
 $awsConfig = $config->get('awsConfig');
 $sqsConfig = $config->get('sqsConfig');
 $sqsQueueAttributes = $sqsConfig['queueAttributes'];
