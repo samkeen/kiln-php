@@ -56,5 +56,5 @@ If the cli arg --config is given, that path is used instead.  It supports s3 buc
 Example
 
 ```
-php run.php --awsRegion us-west-2 --config s3:///kiln-config/testing/config.yml`
+php run.php --awsRegion us-west-2 --config s3://kiln-config/testing/config.yml`
 ```
