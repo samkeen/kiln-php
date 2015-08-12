@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set('UTC');
 require 'vendor/autoload.php';
 $executionStartTime = microtime(true);
 $executionUuid = uniqid() . bin2hex(openssl_random_pseudo_bytes(2));
