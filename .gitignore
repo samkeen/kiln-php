@@ -3,3 +3,4 @@ logs/
 vendor/
 config/config.yml
 build/
+kiln.tar.gz
