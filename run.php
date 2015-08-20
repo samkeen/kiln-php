@@ -1,8 +1,10 @@
 <?php
 date_default_timezone_set('UTC');
 require 'vendor/autoload.php';
+require __DIR__ . '/common.php';
+
 $executionStartTime = microtime(true);
-$executionUuid = uniqid() . bin2hex(openssl_random_pseudo_bytes(2));
+$executionUuid = getExecutionUuid();
 
 $executionMetrics = [
     "executionUuid" => $executionUuid,
@@ -18,20 +20,16 @@ $executionMetrics = [
     "endTime" => ""
 ];
 
-$logger = new Katzgrau\KLogger\Logger(
-    __DIR__ . '/logs/app',
-    Psr\Log\LogLevel::DEBUG,
-    [
-        'extension' => 'log',
-        'logFormat' => "[{date}] [{$executionUuid}] [{level}] {message}"
-    ]
-);
+$logger = getAppLogger($executionUuid);
 
 $aws = createAwsClient($argv, $logger);
 /** @var \Aws\S3\S3Client $s3Client */
 $s3Client = $aws->get('S3');
 $s3Client->registerStreamWrapper();
-$config = getConfig($argv, $logger);
+
+$cliConfigArg = getCliArgValue($argv, '--config');
+$configPath = $cliConfigArg ?: __DIR__ . "/config/config.yml";
+$config = getConfig($configPath, $logger);
 
 $appConfig = $config->get('appConfig');
 // switch to log level in app config
@@ -255,40 +253,6 @@ function writeExecutionDigest(\Aws\S3\S3Client $s3Client, $keyName, $digestConfi
 }
 
 /**
- * Default path for config is './config/config.yml'
- * If the cli arg --config is given, that path is used.  It supports s3 bucket paths
- *
- *   ex: `php run.php --config s3:///kiln-config/testing/config.yml`
- *
- * @param array $cliArgs
- * @param \Psr\Log\LoggerInterface $logger
- * @return \Io\Samk\AmiBuilder\Utils\Config
- */
-function getConfig(array $cliArgs, \Psr\Log\LoggerInterface $logger)
-{
-    $cliConfigArg = getCliArgValue($cliArgs, '--config');
-    $configPath = $cliConfigArg ?: __DIR__ . "/config/config.yml";
-    try {
-        return new \Io\Samk\AmiBuilder\Utils\Config($configPath);
-    } catch (\Exception $e) {
-        $logger->error(
-            "There was a problem loading the config. Error: '{$e->getMessage()}'");
-        shutDown("Problem Loading Config File.  Error: '{$e->getMessage()}'");
-    }
-}
-
-/**
- * @param string $message
- * @param int $returnCode
- */
-function shutDown($message, $returnCode = 1)
-{
-    $message = trim($message) . "\n";
-    echo($message);
-    exit($returnCode);
-}
-
-/**
  * @param array $cliArgs
  * @param \Psr\Log\LoggerInterface $logger
  * @return \Aws\Common\Aws
@@ -306,25 +270,3 @@ function createAwsClient(array $cliArgs, \Psr\Log\LoggerInterface $logger)
 
     return \Aws\Common\Aws::factory($awsConfig);
 }
-
-/**
- * If command was `php run.php --config s3://myBucket/myObject`
- * then getCliArgValue($argv, '--config')
- * would return 's3://myBucket/myObject'
- *
- * @param $cliArgs
- * @param $argKey
- * @return string
- */
-function getCliArgValue($cliArgs, $argKey)
-{
-    $cliArgValue = null;
-    $configArgIndex = array_search($argKey, $cliArgs);
-    if ($configArgIndex !== false) {
-        $cliArgValue = isset($cliArgs[$configArgIndex + 1]) ? $cliArgs[$configArgIndex + 1] : null;
-    }
-    return $cliArgValue;
-}
-
-
-

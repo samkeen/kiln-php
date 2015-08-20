@@ -12,6 +12,11 @@
       "Type": "String",
       "Default": "v0.0.0"
     },
+    "packerTemplatesRepo": {
+      "Description": "The checkout path for your Packer templates.  ex: 'https://github.com/samkeen/packer-templates.git'",
+      "Type": "String",
+      "Default": "https://github.com/<USER-NAME>/<REPO-NAME>.git"
+    },
     "InstanceType": {
       "Description": "WebServer EC2 instance type",
       "Type": "String",
@@ -353,8 +358,17 @@
                 "wget https://github.com/samkeen/kiln/releases/download/",
                 { "Ref": "KilnReleaseVersion" },
                 "/kiln.tar.gz\n",
-                "tar -zxf kiln.tar.gz\n"
+                "tar -zxf kiln.tar.gz\n",
+
+                "php create-config ",
+                " --awsRegion ",
+                { "Ref" : "AWS::Region" },
+                " --templatesRepo ",
+                { "Ref" : "packerTemplatesRepo" },
+
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
+
+
               ]
             ]
           }

@@ -31,6 +31,11 @@ class Config
 
     }
 
+    /**
+     * @param string $key
+     * @param bool $exceptionOnMissing
+     * @return mixed
+     */
     public function get($key, $exceptionOnMissing = false)
     {
         $response = null;
@@ -39,6 +44,21 @@ class Config
         }
 
         return $this->config[$key];
+    }
+
+    /**
+     * @param string $sectionKey
+     * @param string $itemKey
+     * @param mixed $value
+     */
+    public function setSectionValue($sectionKey, $itemKey, $value)
+    {
+        $this->config[$sectionKey][$itemKey] = $value;
+    }
+
+    public function dumpYamlTo($filePath)
+    {
+        file_put_contents($filePath, spyc_dump($this->config));
     }
 
 }
