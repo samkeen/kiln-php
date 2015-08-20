@@ -26,7 +26,7 @@ packer:
   # awsAccessKey: null
   # awsSecretKey: null
 templates:
-  templatesRepo: 'git@github.com:<YOUR REPO PATH>'
+  templatesRepo: 'https://github.com/<YOUR REPO PATH>.git'
   checkoutPath: /home/ec2-user/packer-build-templates
 executionDigest:
   bucketName: seedling-digests
