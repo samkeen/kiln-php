@@ -1,6 +1,7 @@
 <?php
 date_default_timezone_set('UTC');
 require 'vendor/autoload.php';
+require __DIR__ . '/common.php';
 
 $logger = new Katzgrau\KLogger\Logger(
     __DIR__ . '/logs/test',
@@ -138,15 +139,4 @@ function checkCliResponse($cliOutput, $returnCode)
         echo implode("\n", $cliOutput);
         shutDown();
     }
-}
-
-/**
- * @param string $message
- * @param int $returnCode
- */
-function shutDown($message = "Shutting down\n", $returnCode = 1)
-{
-    $message = trim($message) . "\n";
-    echo($message);
-    exit($returnCode);
 }
