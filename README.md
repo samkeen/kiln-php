@@ -35,7 +35,7 @@ $ php run.php --awsRegion us-west-2
 
 ```
 
-### AWS Credentials
+### AWS CLI Credentials
 
 The script will utilize you local AWS Cli configuration (~/.aws)
 
@@ -58,3 +58,9 @@ Example
 ```
 php run.php --awsRegion us-west-2 --config s3://kiln-config/testing/config.yml`
 ```
+
+### Private Templates Repo
+
+If your Packer templates repo is private, there is currently no automated solution to set up authentication 
+to your Repo from the Kiln machine. You'll need to set that up yourself.  I'd suggest a 
+[Deploy Key](https://developer.github.com/guides/managing-deploy-keys/#deploy-keys)

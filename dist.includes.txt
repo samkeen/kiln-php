@@ -3,4 +3,5 @@ src
 vendor
 README.md
 run.php
+init-config.php
 test.php

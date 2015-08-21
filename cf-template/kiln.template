@@ -360,11 +360,12 @@
                 "/kiln.tar.gz\n",
                 "tar -zxf kiln.tar.gz\n",
 
-                "php create-config ",
+                "php init-config.php ",
                 " --awsRegion ",
                 { "Ref" : "AWS::Region" },
                 " --templatesRepo ",
                 { "Ref" : "packerTemplatesRepo" },
+                "\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
 
