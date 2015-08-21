@@ -19,6 +19,11 @@ $cliDefinitions = [
         'required' => true,
         'description' => 'The AWS region Kiln in deployed to.',
         'errorMessage' => "Value for required commandline parameter: '--awsRegion' not found."
+    ],
+    'auditTrailBucket' => [
+        'required' => true,
+        'description' => 'This is the bucket name that kiln audit trails are PUT to. (CF Template creates this bucket)',
+        'errorMessage' => "Value for required commandline parameter: '--auditTrailBucket' not found."
     ]
 ];
 
@@ -50,14 +55,15 @@ $logger = getAppLogger($executionUuid);
 $config = getConfig(__DIR__ . '/config/config.dist.yml', $logger);
 
 $awsProfile = getCliArg('awsCliProfile', $argv, $cliDefinitions);
-if(empty($awsProfile)) {
-    $config->setSectionValue('awsConfig', 'profile', null);
-}
+$config->setSectionValue('awsConfig', 'profile', $awsProfile);
 
 $templatesRepo = getCliArg('templatesRepo', $argv, $cliDefinitions);
 $config->setSectionValue('templates', 'templatesRepo', $templatesRepo);
 
 $awsRegion = getCliArg('awsRegion', $argv, $cliDefinitions);
 $config->setSectionValue('awsConfig', 'region', $awsRegion);
+
+$awsRegion = getCliArg('auditTrailBucket', $argv, $cliDefinitions);
+$config->setSectionValue('executionDigest', 'bucketName', $awsRegion);
 
 $config->dumpYamlTo(__DIR__ . "/config/config.yml");
