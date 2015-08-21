@@ -13,7 +13,7 @@
       "Default": "v0.0.0"
     },
     "packerTemplatesRepo": {
-      "Description": "The checkout path for your Packer templates.  ex: 'https://github.com/samkeen/packer-templates.git'",
+      "Description": "The checkout path for your Packer templates.  ex: 'https://github.com/<USERNAME>/packer-templates.git'",
       "Type": "String",
       "Default": "https://github.com/<USER-NAME>/<REPO-NAME>.git"
     },
