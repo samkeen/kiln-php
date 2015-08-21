@@ -2,6 +2,7 @@ config
 src
 vendor
 README.md
+common.php
 run.php
 init-config.php
 test.php
