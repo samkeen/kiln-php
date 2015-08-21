@@ -366,7 +366,7 @@
                 " --templatesRepo ",
                 { "Ref" : "packerTemplatesRepo" },
                 " --auditTrailBucket ",
-                { "Fn::GetAtt": ["AuditTrailBucket", "BucketName"]},
+                { "Ref" : "AuditTrailBucket" },
                 "\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
