@@ -366,7 +366,7 @@
                 " --templatesRepo ",
                 { "Ref" : "packerTemplatesRepo" },
                 " --auditTrailBucket ",
-                { "Ref" : "AuditTrailBucket" },
+                { "Fn::GetAtt": ["AuditTrailBucket", "DomainName"]},
                 "\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
@@ -420,18 +420,7 @@
     },
     "AuditBucketBucketSecureURL": {
       "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": [
-                "AuditTrailBucket",
-                "DomainName"
-              ]
-            }
-          ]
-        ]
+        "Ref": "AuditTrailBucket"
       },
       "Description": "Name of S3 bucket to hold the audit trail content"
     }
