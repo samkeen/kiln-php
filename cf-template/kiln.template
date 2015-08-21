@@ -365,10 +365,11 @@
                 { "Ref" : "AWS::Region" },
                 " --templatesRepo ",
                 { "Ref" : "packerTemplatesRepo" },
+                " --auditTrailBucket ",
+                { "Fn::GetAtt": ["AuditTrailBucket", "BucketName"]},
                 "\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
-
 
               ]
             ]
