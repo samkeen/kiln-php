@@ -273,7 +273,7 @@
     }
   },
   "Resources": {
-    "BuildMachineSecurityGroup": {
+    "KilnBuildMachineSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "GroupDescription": "Enable SSH access",
@@ -295,14 +295,7 @@
         ]
       }
     },
-    "InstanceProfile" : {
-      "Type" : "AWS::IAM::InstanceProfile",
-      "Properties" : {
-        "Path" : "/",
-        "Roles" : ["Packer-Ami-Builder-Machine"]
-      }
-    },
-    "BuildMachine": {
+    "KilnBuildMachine": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "ImageId": {
@@ -327,13 +320,13 @@
         },
         "SecurityGroups": [
           {
-            "Ref": "BuildMachineSecurityGroup"
+            "Ref": "KilnBuildMachineSecurityGroup"
           }
         ],
         "KeyName": {
           "Ref": "KeyName"
         },
-        "IamInstanceProfile" : {"Ref" : "InstanceProfile"} ,
+        "IamInstanceProfile" : {"Ref" : "KilnEc2RoleInstanceProfile"} ,
         "UserData": {
           "Fn::Base64": {
             "Fn::Join": [
@@ -366,7 +359,9 @@
                 " --templatesRepo ",
                 { "Ref" : "packerTemplatesRepo" },
                 " --auditTrailBucket ",
-                { "Ref": "AuditTrailBucket" },
+                { "Ref": "KilnAuditTrailBucket"},
+                " --buildRequestQueue ",
+                { "Ref": "KilnBuildRequestQueue"},
                 "\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
@@ -383,7 +378,7 @@
         ]
       }
     },
-    "AuditTrailBucket": {
+    "KilnAuditTrailBucket": {
       "Type": "AWS::S3::Bucket",
       "DeletionPolicy": "Delete",
       "Properties": {
@@ -397,7 +392,7 @@
         ]
       }
     },
-    "BuildRequestQueue": {
+    "KilnBuildRequestQueue": {
       "Type": "AWS::SQS::Queue",
       "Properties": {
         "DelaySeconds": "0",
@@ -406,23 +401,139 @@
         "ReceiveMessageWaitTimeSeconds": "0",
         "VisibilityTimeout": "1800"
       }
+    },
+    "KilnEc2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [ "ec2.amazonaws.com" ]
+            },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        },
+        "Path": "/"
+      }
+    },
+    "KilnEc2RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "root",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+            "Effect": "Allow",
+            "Action": [
+              "ec2:AttachVolume",
+              "ec2:CreateVolume",
+              "ec2:DeleteVolume",
+              "ec2:CreateKeypair",
+              "ec2:DeleteKeypair",
+              "ec2:CreateSecurityGroup",
+              "ec2:DeleteSecurityGroup",
+              "ec2:AuthorizeSecurityGroupIngress",
+              "ec2:CreateImage",
+              "ec2:RunInstances",
+              "ec2:TerminateInstances",
+              "ec2:StopInstances",
+              "ec2:DescribeVolumes",
+              "ec2:DetachVolume",
+              "ec2:DescribeInstances",
+              "ec2:CreateSnapshot",
+              "ec2:DeleteSnapshot",
+              "ec2:DescribeSnapshots",
+              "ec2:DescribeImages",
+              "ec2:RegisterImage",
+              "ec2:CreateTags",
+              "ec2:ModifyImageAttribute",
+              "ec2:DeregisterImage"
+            ],
+            "Resource": "*"
+          },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket"
+              ],
+              "Resource": [
+                {"Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "KilnAuditTrailBucket"}]]}
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject"
+              ],
+              "Resource": [
+                {"Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "KilnAuditTrailBucket"},"/*"]]}
+              ]
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+                "sqs:CreateQueue"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {"Fn::Join": ["", ["arn:aws:sqs:*:*:", { "Ref": "KilnBuildRequestQueue"}]]}
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+              ],
+              "Resource": [
+                "arn:aws:logs:*:*:*"
+              ]
+            } ]
+        },
+        "Roles": [ {
+          "Ref": "KilnEc2Role"
+        } ]
+      }
+    },
+    "KilnEc2RoleInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [ {
+          "Ref": "KilnEc2Role"
+        } ]
+      }
     }
   },
   "Outputs": {
-    "BuildMachineAccess": {
+    "BuildMachine": {
       "Value": {
         "Fn::GetAtt": [
-          "BuildMachine",
+          "KilnBuildMachine",
           "PublicIp"
         ]
       },
-      "Description": "WordPress Website"
+      "Description": "The Kiln build machine"
     },
-    "AuditBucketBucketSecureURL": {
+    "AuditBucketBucket": {
       "Value": {
-        "Ref": "AuditTrailBucket"
+        "Ref": "KilnAuditTrailBucket"
       },
       "Description": "Name of S3 bucket to hold the audit trail content"
+    },
+    "WorkQueue": {
+      "Value": {
+        "Ref": "KilnBuildRequestQueue"
+      },
+      "Description": "The work queue used to inject build requests"
     }
   }
 }
