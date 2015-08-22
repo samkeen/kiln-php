@@ -9,7 +9,7 @@ $executionUuid = getExecutionUuid();
 $executionMetrics = [
     "executionUuid" => $executionUuid,
     "startTime" => $executionStartTime,
-    "amiBuildQueueName" => "",
+    "amiBuildQueueUrl" => "",
     "jobMessage" => null,
     "jobBuildTemplate" => "",
     "jobBuildTemplateSha" => "",
@@ -22,50 +22,38 @@ $executionMetrics = [
 
 $logger = getAppLogger($executionUuid);
 
-$aws = createAwsClient($argv, $logger);
-/** @var \Aws\S3\S3Client $s3Client */
-$s3Client = $aws->get('S3');
-$s3Client->registerStreamWrapper();
-
 $cliConfigArg = getCliArgValue($argv, '--config');
 $configPath = $cliConfigArg ?: __DIR__ . "/config/config.yml";
 $config = getConfig($configPath, $logger);
+
+$aws = createAwsClient($argv, $config);
+/** @var \Aws\S3\S3Client $s3Client */
+$s3Client = $aws->get('S3');
+$s3Client->registerStreamWrapper();
 
 $appConfig = $config->get('appConfig');
 // switch to log level in app config
 $logger->setLogLevelThreshold($appConfig['logLevel']);
 $sqsConfig = $config->get('sqsConfig');
-$sqsQueueAttributes = $sqsConfig['queueAttributes'];
 
 /** @var \Aws\Sqs\SqsClient $sqsClient */
 $sqsClient = $aws->get('sqs');
-$queueUrl = '';
-$executionMetrics['amiBuildQueueName'] = $sqsConfig['amiBuildRequestQueueName'];
+$queueUrl = $sqsConfig['amiBuildRequestQueueUrl'];
+$executionMetrics['amiBuildQueueUrl'] = $queueUrl;
+
 try {
-    // create Queue if not exists
-    $createQueueResponse = $sqsClient->createQueue([
-        'QueueName' => $sqsConfig['amiBuildRequestQueueName'],
-        'Attributes' => $sqsQueueAttributes
+    $work = $sqsClient->receiveMessage([
+        "QueueUrl" => $queueUrl,
+        "MaxNumberOfMessages" => 1,
+        "MessageAttributeNames" => []
     ]);
-    $queueUrl = $createQueueResponse->get('QueueUrl');
-//    deleteQueue($sqsClient, $sqsConfig['amiBuildRequestQueueName'], $logger);
-
-} catch (\Aws\Sqs\Exception\SqsException $e) {
-    $logger->error("SqsException during create and/or access of SQS:  '{$e->getMessage()}''");
-    shutDown("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
-} catch (Exception $e) {
-    $logger->error("Exception during create and/or access of SQS:  '{$e->getMessage()}''");
-    shutDown("Error during create and/or access of SQS:  '{$e->getMessage()}''\n");
+} catch (Aws\Sqs\Exception\SqsException $e) {
+    $logger->error($e);
+    shutDown('Error access SQS: ' . $e->getMessage());
+}catch (\Exception $e) {
+    $logger->error($e);
+    shutDown('Unexpected Error during SQS access attempt: ' . $e->getMessage());
 }
-
-/**
- * if Work Found
- */
-$work = $sqsClient->receiveMessage([
-    "QueueUrl" => $queueUrl,
-    "MaxNumberOfMessages" => 1,
-    "MessageAttributeNames" => []
-]);
 
 $message = $work->get("Messages")[0];
 
@@ -168,34 +156,11 @@ writeExecutionDigest(
 );
 
 /**
- * Construct Job run manifest
- */
-
-/**
- * Put manifest in S3
  * @param \Aws\Sqs\SqsClient $sqsClient
- * @param string $queueName
- */
-
-/**
- * @param \Aws\Sqs\SqsClient $sqsClient
- * @param string $queueName
+ * @param $queueUrl
+ * @param $messageReceiptHandle
  * @param \Psr\Log\LoggerInterface $logger
  */
-function deleteQueue(\Aws\Sqs\SqsClient $sqsClient, $queueName, \Psr\Log\LoggerInterface $logger)
-{
-    try {
-        $queueUrlResponse = $sqsClient->getQueueUrl(['QueueName' => $queueName]);
-        $sqsClient->deleteQueue(['QueueUrl' => $queueUrlResponse->get('QueueUrl')]);
-    } catch (\Aws\Sqs\Exception\SqsException $e) {
-        $logger->error("SqsException Deleting Queue '{$queueName}': {$e->getMessage()}");
-        shutDown("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}");
-    } catch (Exception $e) {
-        $logger->error("Exception Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
-        shutDown("ERROR Deleting Queue '{$queueName}': {$e->getMessage()}" . "\n");
-    }
-}
-
 function deleteQueueMessage(
     \Aws\Sqs\SqsClient $sqsClient,
     $queueUrl,
@@ -254,19 +219,11 @@ function writeExecutionDigest(\Aws\S3\S3Client $s3Client, $keyName, $digestConfi
 
 /**
  * @param array $cliArgs
- * @param \Psr\Log\LoggerInterface $logger
+ * @param \Io\Samk\AmiBuilder\Utils\Config $config
  * @return \Aws\Common\Aws
  */
-function createAwsClient(array $cliArgs, \Psr\Log\LoggerInterface $logger)
+function createAwsClient(array $cliArgs, $config)
 {
-    $awsConfig['region'] = getCliArgValue($cliArgs, '--awsRegion');
-    if(!$awsConfig['region']) {
-        shutDown("Value for required commandline parameter: '--awsRegion' not found");
-    }
-    $profile = getCliArgValue($cliArgs, '--awsProfile');
-    if($profile) {
-        $awsConfig['profile'] = $profile;
-    }
-
+    $awsConfig = $config->get('awsConfig', true);
     return \Aws\Common\Aws::factory($awsConfig);
 }
