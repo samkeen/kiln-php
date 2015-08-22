@@ -26,7 +26,6 @@ try {
 
 $awsConfig = $config->get('awsConfig', true);
 $sqsConfig = $config->get('sqsConfig', true);
-$sqsQueueAttributes = $sqsConfig['queueAttributes'];
 /**
  * Init AWS SDK
  */
@@ -37,29 +36,21 @@ $aws = \Aws\Common\Aws::factory($awsConfig);
  */
 /** @var \Aws\Sqs\SqsClient $sqsClient */
 $sqsClient = $aws->get('sqs');
-$queueUrl = '';
-$sqsName = $sqsConfig['amiBuildRequestQueueName'];
+$queueUrl = $sqsConfig['amiBuildRequestQueueUrl'];
 try {
 
     echo "1. Checking for SQS connectivity\n\n";
-    echo "Attempting getQueueUrl call on SQS '{$sqsName}'...\n";
-    $queueResponse = $sqsClient->getQueueUrl([
-        'QueueName' => $sqsName
-    ]);
-    $queueUrl = $queueResponse->get('QueueUrl');
-    echo "Was able to get Queue URL ({$queueUrl}) for configured work queue: '{$sqsName}'\n\n";
-    // call receiveMessage with 1sec visibility timeout just to see if we get an error
-    echo "Attempting receiveMessage call on SQS '{$sqsName}'...\n";
+    echo "Attempting receiveMessage call on SQS '{$queueUrl}'...\n";
     $work = $sqsClient->receiveMessage([
         "QueueUrl" => $queueUrl,
         "MaxNumberOfMessages" => 1,
         "VisibilityTimeout" => 1, // 1 sec time out
         "MessageAttributeNames" => []
     ]);
-    echo "Was able to make receiveWork call on SQS '{$sqsName}' without error\n\n";
+    echo "Was able to make receiveWork call on SQS '{$queueUrl}' without error\n\n";
 
 } catch (Exception $e) {
-    shutDown("Error when attempting to access and/or receive work from SQS: '{$sqsName}'"
+    shutDown("Error when attempting to access and/or receive work from SQS: '{$queueUrl}'"
         . ".  Error message: {$e->getMessage()}");
 }
 

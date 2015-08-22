@@ -31,8 +31,8 @@ $cliDefinitions = [
     ],
     'buildRequestQueue' => [
         'required' => true,
-        'configKeyPath' => 'sqsConfig.amiBuildRequestQueueName',
-        'description' => 'This is the bucket name that kiln audit trails are PUT to. (CF Template creates this bucket)',
+        'configKeyPath' => 'sqsConfig.amiBuildRequestQueueUrl',
+        'description' => 'This is the work queue that container builds are injected into',
         'errorMessage' => "Value for required commandline parameter: '--buildRequestQueue' not found."
     ]
 ];

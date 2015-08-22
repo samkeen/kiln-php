@@ -12,15 +12,7 @@ appConfig:
   #  debug
   logLevel: debug
 sqsConfig:
-  amiBuildRequestQueueName: ami-build-requests
-  # see http://docs.aws.amazon.com/aws-sdk-php/v2/api/class-Aws.Sqs.SqsClient.html#_getQueueAttributes
-  queueAttributes:
-    VisibilityTimeout: 1200
-    MessageRetentionPeriod: 345600
-    # 256KB is the max
-    MaximumMessageSize: 256000
-    ReceiveMessageWaitTimeSeconds: 0
-    DelaySeconds: 0
+  amiBuildRequestQueueUrl:
 packer:
   executablePath: /usr/bin/container-packer
   # awsAccessKey & awsSecretKey not needed if running on EC2 launched with appropriate Role
@@ -30,4 +22,4 @@ templates:
   templatesRepo: 'https://github.com/<YOUR REPO PATH>.git'
   checkoutPath: /home/ec2-user/packer-build-templates
 executionDigest:
-  bucketName: seedling-digests
+  bucketName:
