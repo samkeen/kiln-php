@@ -482,7 +482,7 @@
               ],
               "Effect": "Allow",
               "Resource": [
-                {"Fn::Join": ["", ["arn:aws:sqs:*:*:", { "Ref": "KilnBuildRequestQueue"}]]}
+                {"Fn::GetAtt": ["KilnBuildRequestQueue", "Arn" ]}
               ]
             },
             {
@@ -531,7 +531,7 @@
     },
     "WorkQueue": {
       "Value": {
-        "Ref": "KilnBuildRequestQueue"
+        "Fn::GetAtt": ["KilnBuildRequestQueue", "Arn" ]
       },
       "Description": "The work queue used to inject build requests"
     }
