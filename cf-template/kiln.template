@@ -335,7 +335,7 @@
                 "#!/bin/bash -xe\n",
 
                 "yum update -y\n",
-                "yum install -y git php55-cli\n",
+                "yum install -y git php55-cli awslogs\n",
 
                 "wget https://dl.bintray.com/mitchellh/packer/packer_0.8.2_linux_amd64.zip\n",
                 "unzip packer_0.8.2_linux_amd64.zip -d /opt/packer\n",
@@ -363,6 +363,14 @@
                 " --buildRequestQueue ",
                 { "Ref": "KilnBuildRequestQueue"},
                 "\n",
+
+                "mv /etc/awslogs/awslogs.conf /etc/awslogs/awslogs.conf.stock\n",
+                "mv /etc/awslogs/awscli.conf /etc/awslogs/awscli.conf.stock\n",
+                "mkdir -p /var/awslogs/state\n",
+                "mv /home/ec2-user/kiln/config/cloudwatchLogs/awscli.conf /etc/awslogs/awscli.conf\n",
+                "mv /home/ec2-user/kiln/config/cloudwatchLogs/awslogs.conf /etc/awslogs/awslogs.conf\n",
+                "service awslogs start\n",
+                "chkconfig awslogs on\n",
 
                 "chown -R ec2-user:ec2-user /home/ec2-user/kiln\n"
 

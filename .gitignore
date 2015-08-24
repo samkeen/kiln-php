@@ -2,5 +2,7 @@
 logs/
 vendor/
 config/config.yml
+config/cloudwatchLogs/awscli.conf
+config/cloudwatchLogs/awslogs.conf
 build/
 kiln.tar.gz
