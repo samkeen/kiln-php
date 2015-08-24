@@ -148,7 +148,7 @@ $shaForPath = substr($templateSha, 0, 7);
 $s3ObjectPath = "builds/{$template}/{$date}/{$shaForPath}.yml";
 $logger->info("Writing results to S3: '{$s3ObjectPath}'");
 writeExecutionDigest(
-    $sqsClient,
+    $s3Client,
     $s3ObjectPath,
     $config->get('executionDigest'),
     spyc_dump($executionMetrics),
