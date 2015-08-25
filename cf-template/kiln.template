@@ -380,8 +380,8 @@
         },
         "Tags": [
           {
-            "Key": "Name",
-            "Value": "Kiln Build Machine"
+            "Key": "kiln_component",
+            "Value": "container_build_machine"
           }
         ]
       }
@@ -391,7 +391,6 @@
       "DeletionPolicy": "Delete",
       "Properties": {
         "AccessControl": "Private",
-        "BucketName": "kiln-audit-trail",
         "Tags": [
           {
             "Key": "kiln_component",
