@@ -39,7 +39,10 @@ Kiln installs via a CloudFormation Script.  It creates all its own resources.
 
 ### Trigger A Job
 
-Simply send a Job to SQS that specifies the template name and version (git sha)
+Simply send a Job to SQS that specifies two things.
+
+* `templateName`: this is the path from the root of the git repo to the targeted template file.  ex: `testing/just-prove-it-works.json` 
+* `sha`:  This is git sha at which to pull the Template file. 
  
 ![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/SQS-send-test-message.png)
 
