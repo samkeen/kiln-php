@@ -8,16 +8,18 @@ $executionUuid = getExecutionUuid();
 
 $executionMetrics = [
     "executionUuid" => $executionUuid,
-    "startTime" => $executionStartTime,
+    "startTimestamp" => $executionStartTime,
+    "startDateTime" => $date('r', $executionStartTime),
     "amiBuildQueueUrl" => "",
     "jobMessage" => null,
     "jobBuildTemplate" => "",
     "jobBuildTemplateSha" => "",
-    "jobReceived" => false,
     "createdAmiId" => "",
     "createdAmiRegion" => "",
     "endedInError" => false,
-    "endTime" => ""
+    "endTimestamp" => "",
+    "endDateTime" => "",
+    "processingDuration" => ""
 ];
 
 $logger = getAppLogger($executionUuid);
@@ -88,7 +90,6 @@ unset($executionMetrics['jobMessage']['ReceiptHandle']);
 $executionMetrics['jobBuildTemplate'] = $template;
 $executionMetrics['jobBuildTemplateSha'] = $templateSha;
 $logger->info("Found Work, request for template '{$template}' @ SHA '{$templateSha}'");
-$executionMetrics['jobReceived'] = true;
 
 $cli = new \Io\Samk\AmiBuilder\Utils\Cli(
     $logger,
@@ -136,14 +137,16 @@ if ($returnCode == 0) {
     $executionMetrics['createdAmiId'] = $amiId;
     $logger->info("Packer build succeeded: Region '{$region}', AMI id '{$amiId}'");
     deleteQueueMessage($sqsClient, $queueUrl, $message['ReceiptHandle'], $logger);
-    $executionMetrics['endTime'] = microtime(true);
+    $executionMetrics['endTimestamp'] = microtime(true);
+    $executionMetrics['endDateTime'] = date('r', $executionMetrics['endTimestamp']);
+    $executionMetrics['processingDuration'] = $executionMetrics['endTimestamp'] - $executionMetrics['startTimestamp'];
 } else {
     $executionMetrics['endedInError'] = true;
     $logger->error("The packer build execution returned non zero result: '{$returnCode}'");
     $logger->error("Last 20 lines of output: ", array_slice($result, -20));
 }
 
-$date = date('Y-m-d\TH-i-s', $executionMetrics['startTime']);
+$date = date('Y-m-d\TH-i-s', $executionMetrics['startTimestamp']);
 $shaForPath = substr($templateSha, 0, 7);
 $s3ObjectPath = "builds/{$template}/{$date}/{$shaForPath}.yml";
 $logger->info("Writing results to S3: '{$s3ObjectPath}'");
