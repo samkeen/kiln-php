@@ -10,14 +10,38 @@ It's current incarnation is in PHP, I plan to port that to Python, or possibly G
 
 ## Architecture
 
-This is the planned architecture, not there yet but making progress.
+The build machine watches the work queue for build requests.  
+
+Packer templates are kept in a specified Github Repo
+
+Logging for the build machine is sent to [CloudWatch Logs](https://aws.amazon.com/about-aws/whats-new/2014/07/10/introducing-amazon-cloudwatch-logs/) so they can be easily monitored and/or browsed.
+
+Each AMI build job creates a *build summary* document and places it in a specified S3 bucket.
 
 ![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/SeederArchitecture.png)
+
+A build request job is sent to the work queue.  It specifies the name and version (git sha) of the template to build.
+
+Then build machine picks up the job.  It pull the template at the correct version from your github repo and uses it for the Paker build of the AMI.
+
+Once the AMI build is complete, the build machine puts a job summary document in the specified audit-trail s3 bucket.
 
 
 ## Install
 
-```
+Kiln installs via a CloudFormation Script.  It creates all its own resources.
+
+### Private Templates Repo
+
+If your Packer templates repo is private, there is currently no automated solution to set up authentication 
+to your Repo from the Kiln machine. You'll need to set that up yourself.  I'd suggest a 
+[Deploy Key](https://developer.github.com/guides/managing-deploy-keys/#deploy-keys)
+
+## Optionally install locally
+
+You would normally only do this if you were developing kiln.
+
+```bash
 $ git clone https://github.com/samkeen/kiln.git
 $ cd kiln/
 $ cp config/config.dist.yml config/config.yml
@@ -58,9 +82,3 @@ Example
 ```
 php run.php --awsRegion us-west-2 --config s3://kiln-config/testing/config.yml`
 ```
-
-### Private Templates Repo
-
-If your Packer templates repo is private, there is currently no automated solution to set up authentication 
-to your Repo from the Kiln machine. You'll need to set that up yourself.  I'd suggest a 
-[Deploy Key](https://developer.github.com/guides/managing-deploy-keys/#deploy-keys)
