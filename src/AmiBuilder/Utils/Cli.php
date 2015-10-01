@@ -68,8 +68,7 @@ class Cli
      */
     public function runPackerBuild($executable, $pathToTemplate, $awsAccessKey = null, $awsSecretKey = null)
     {
-        $userDataFilePath = dirname($pathToTemplate) . '/user_data.sh';
-        $awsVars = "-var 'user_data_file_path={$userDataFilePath}'";
+        $awsVars = "";
         if ($awsAccessKey) {
             $awsVars .= " -var 'aws_access_key={$awsAccessKey}' -var 'aws_secret_key={$awsSecretKey}'";
         }
