@@ -6,10 +6,6 @@ This is a [Packer](https://www.packer.io/) based AMI building system.  Its goal 
 
 It's current incarnation is in PHP, I plan to port that to Python, or possibly Golang in the near future.
 
-[![Build Status](https://travis-ci.org/samkeen/kiln.svg?branch=master)](https://travis-ci.org/samkeen/kiln)
-
-[![Coverage Status](https://coveralls.io/repos/samkeen/kiln/badge.svg?branch=master&service=github)](https://coveralls.io/github/samkeen/kiln?branch=master)
-
 ## Architecture
 
 The build machine watches the work queue for build requests.  
@@ -20,7 +16,7 @@ Logging for the build machine is sent to [CloudWatch Logs](https://aws.amazon.co
 
 Each AMI build job creates a *build summary* document and places it in a specified S3 bucket.
 
-![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/SeederArchitecture.png)
+![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln-php/master/docs/SeederArchitecture.png)
 
 A build request job is sent to the work queue.  It specifies the name and version (git sha) of the template to build.
 
@@ -33,9 +29,9 @@ Once the AMI build is complete, the build machine puts a job summary document in
 
 Kiln installs via a CloudFormation Script.  It creates all its own resources.
 
-![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/cf-template-config-screen.png)
+![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln-php/master/docs/cf-template-config-screen.png)
 
-![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/cf-template-complete-screen.png)
+![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln-php/master/docs/cf-template-complete-screen.png)
 
 ## Operation
 
@@ -46,7 +42,7 @@ Simply send a Job to SQS that specifies two things.
 * `templateName`: this is the path from the root of the git repo to the targeted template file.  ex: `testing/just-prove-it-works.json` 
 * `sha`:  This is git sha at which to pull the Template file. 
  
-![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/SQS-send-test-message.png)
+![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln-php/master/docs/SQS-send-test-message.png)
 
 ### Review A Job
 
@@ -56,7 +52,7 @@ As a Job runs, its application logs are flushed to
 [AWS CloudWatch Logs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/WhatIsCloudWatchLogs.html) 
 so you can watch that output in near real-time and/or have automated triggers on key phrases in the logs.
 
-![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln/master/docs/cloudwatch-logs-output.png)
+![Overall Architecture](https://raw.githubusercontent.com/samkeen/kiln-php/master/docs/cloudwatch-logs-output.png)
 
 #### Audit Trail
 
