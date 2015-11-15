@@ -1,5 +1,7 @@
 # kiln
 
+## Work on this projects has been moved to the Python port at [Kiln](https://github.com/samkeen/kiln)
+
 This is a [Packer](https://www.packer.io/) based AMI building system.  Its goal is to simplify and help organize the creation of AMIs.
 
 It's current incarnation is in PHP, I plan to port that to Python, or possibly Golang in the near future.
