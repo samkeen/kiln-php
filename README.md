@@ -1,6 +1,6 @@
 # kiln
 
-## Work on this projects has been moved to the Python port at [Kiln](https://github.com/samkeen/kiln)
+## Work on this projects has been moved to the Python port at [AMI Organizer](https://github.com/samkeen/amiorganizer)
 
 This is a [Packer](https://www.packer.io/) based AMI building system.  Its goal is to simplify and help organize the creation of AMIs.
 
